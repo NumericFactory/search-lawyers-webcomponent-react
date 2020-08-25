@@ -104,11 +104,22 @@ class SearchLawyers extends React.Component {
       @Param : nom,  prenom (string)
       Return a formatted fullName (ex: rouve-jean-paul)
    */
-   getUrlFormatFullName(nom, prenom) {
+   getFullName(nom, prenom) {
       let lastname = nom.trim().length > 0 ? nom.toLowerCase().replace(' ', '-') : '';
       let firstname = prenom.trim().length > 0 ? prenom.toLowerCase().replace(' ', '-') : ''
       return lastname.length > 0 ? lastname + '-' + firstname : firstname;
    }
+
+   /*
+     getLinkToProfileUrl(city, lastname, firstname)
+      @Param : city, lastname, firstname (string)
+      Return a formatted link (ex: /paris/rouve-jean-paul)
+   */
+   getLinkToProfileUrl(city, lastname, firstname) {
+      return '/' + city.toLowerCase().replace(' ', '-') + '/' + this.getFullName(lastname, firstname);
+   }
+
+
 
    /************ 2- PARTIE VUE (render()) *****************/
    /****************************************************/
@@ -148,7 +159,7 @@ class SearchLawyers extends React.Component {
                         <ul className="lawyers">
                            {this.state.lawyers.map((lawyer) =>
                               <li key={lawyer.id}>
-                                 <a href={'/' + lawyer.workAddressCity.toLowerCase() + '/' + this.getUrlFormatFullName(lawyer.lastName, lawyer.firstName)}>
+                                 <a href={this.getLinkToProfileUrl(lawyer.workAddressCity, lawyer.lastName, lawyer.firstName)}>
                                     <div className="d-flex align-center">
                                        {lawyer.user == undefined || lawyer.user.profilePictureUrl == undefined ? <img src="icon-defaultprofilepicture.png" /> : <img src={lawyer.user.profilePictureUrl} />}
                                        <span className="d-flex dir-column">
