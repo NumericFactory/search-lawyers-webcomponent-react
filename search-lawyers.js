@@ -3,6 +3,10 @@ class SearchLawyers extends React.Component {
 
    constructor(props) {
       super(props);
+      /* 
+         l'objet state du component
+         https://fr.reactjs.org/docs/faq-state.html
+      */
       this.state = {
          isLoading: false,
          lawyers: [],
@@ -13,27 +17,27 @@ class SearchLawyers extends React.Component {
          isResultsBoxOpened: true
       };
       console.log(this);
+      // Récupération de la liste des spécialités
       this.getSpecialities().then((spe) => this.setState({ specialties: spe }))
    }
 
-   /****  EVENEMENT UTILISATEURS *****/
+   /**** 1- EVENEMENT UTILISATEURS *****/
+   /**********************************/
 
    /*
       handleKeyupOnUserSearch(e)
-      Role: afficher la liste des specialités et la liste des avocats, 
-            lorsque l'utilisateur saisi dans input recherche
+      Role: afficher la liste des suggestions specialités et avocats, 
+            quand l'utilisateur saisi dans input recherche
       @param : event
    */
-   async handleKeyupOnUserSearch(e) {
+   async handleKeyupOnUserSearch(ev) {
       // e.persist(); https://fr.reactjs.org/docs/events.html
-      this.setState({ userSearchString: e.target.value });
+      this.setState({ userSearchString: ev.target.value });
       let userSearch = this.state.userSearchString;
-      // si la recherche utilisateur est un domaine de compétences connu ou un avocat connu 
       if (userSearch.length < 2) {
          this.setState({ suggestedSpecialties: [], lawyers: [] });
       }
       else {
-         console.log("ok")
          let suggestedSpe = this.state.specialties.filter(s =>
             s.displayFrFr.toLowerCase().includes(userSearch.toLowerCase())
          );
@@ -46,56 +50,74 @@ class SearchLawyers extends React.Component {
       }
    }
 
-
+   /*
+      searchLawyers(ev)
+      Role : lorsque l'utilisateur clique sur le bouton rechercher
+      @params : event
+   */
    async searchLawyers(ev) {
       ev.preventDefault();
-      console.log(this.state);
-      //console.log("kjhkjhkjh")
-      //1 recuperer la saisie utilisateur
+      // 1 recuperer la saisie utilisateur
       let userSearchTerm = this.state.userSearchString;
-
       this.setState({ isLoading: true });
       // 2 Faire la requete API (recuperer la liste des avocats)
-      // set headers of the ajax request
       let companiesFromApi = await this.onSearchGetLawyers(userSearchTerm)
-      console.log(companiesFromApi);
       // request is end, so set isLoading to FALSE
       this.setState({ isLoading: false })
       // 3 Set lawyers value  with response of api call
       this.setState({ lawyers: companiesFromApi })
-
    }
 
+   /*
+      handleBlurCloseResultsBox()
+      Role : fermer la liste des résultats sous le champ input
+             en mettant à jour isResultsBoxOpened = false
+   */
    handleBlurCloseResultsBox() {
       this.setState({ isResultsBoxOpened: false })
    }
 
+   /*
+      handleBlurCloseResultsBox()
+      Role : ouvrir la liste des résultats sous le champ input
+             en mettant à jour isResultsBoxOpened = true
+   */
    handleFocusOpenResultsBox() {
       this.setState({ isResultsBoxOpened: true })
    }
 
+   /*
+      setInputValue(str)
+      Role : Remplir le champ input / La fonction est déclenché 
+             quand l'utilisateur clique sur une spécialité dans la liste
+      @Param : str - une chaine de caractère représentant une spécialité (ex: Droit Immobilier)
+             
+   */
    setInputValue(str) {
       // setter le champ input avec la valeur str
       this.setState({ userSearchString: str });
       this.setState({ isResultsBoxOpened: false })
    }
 
-   printFullName(nom, prenom) {
-      let lastname = nom.trim().length > 0 ? nom.toLowerCase() : '';
-      let firstname = prenom.trim().length > 0 ? prenom.toLowerCase() : ''
-      return lastname.length > 0 ? lastname + '-' + firstname.replace(' ', '-') : firstname.replace(' ', '-');
+   /*
+      getUrlFullName
+      @Param : nom,  prenom (string)
+      Return a formatted fullName (ex: rouve-jean-paul)
+   */
+   getUrlFormatFullName(nom, prenom) {
+      let lastname = nom.trim().length > 0 ? nom.toLowerCase().replace(' ', '-') : '';
+      let firstname = prenom.trim().length > 0 ? prenom.toLowerCase().replace(' ', '-') : ''
+      return lastname.length > 0 ? lastname + '-' + firstname : firstname;
    }
 
-   // PARTIE VUE 
+   /************ 2- PARTIE VUE (render()) *****************/
+   /****************************************************/
    render() {
-      console.log('law : ', this.state.lawyers)
       return (
-
          <div className="grix xs1 sm2 container d-block">
             <h1 className="font-w600">Recherchez un avocat</h1>
             <div className="form-field">
                <form>
-
                   {(this.state.isLoading && this.state.userSearchString.trim().length > 0) ?
                      <div className="spinner small txt-blue w50">
                         <svg viewBox="25 25 50 50"><circle className="spinner-path" cx="50" cy="50" r="20" fill="none" strokeWidth="3" /></svg>
@@ -104,15 +126,12 @@ class SearchLawyers extends React.Component {
                   {/* <span className="searchIcon" dangerouslySetInnerHTML={{ __html: searchIcon }}></span> */}
                   <span className="searchIcon"><i className="fas fa-search"></i></span>
                   <div className="d-flex align-center">
-
                      <input value={this.state.userSearchString}
 
                         onFocus={() => this.handleFocusOpenResultsBox()}
                         onChange={e => this.handleKeyupOnUserSearch(e)}
                         className="form-control rounded-1" placeholder='avocat, cabinet, domaine juridique...' />
-
                   </div>
-
                   {/* SI L'UTILISATEUR EST DANS LE input de recherche  */}
                   {this.state.isResultsBoxOpened == true ?
                      <div className="results">
@@ -128,8 +147,8 @@ class SearchLawyers extends React.Component {
                         {/* LIST DES ACOVATS */}
                         <ul className="lawyers">
                            {this.state.lawyers.map((lawyer) =>
-                              <li data-url={'list.html/' + lawyer.workAddressCity + '/' + lawyer.lastName + '-' + lawyer.firstName} key={lawyer.id}>
-                                 <a href={'/' + lawyer.workAddressCity.toLowerCase() + '/' + this.printFullName(lawyer.lastName, lawyer.firstName)}>
+                              <li key={lawyer.id}>
+                                 <a href={'/' + lawyer.workAddressCity.toLowerCase() + '/' + this.getUrlFormatFullName(lawyer.lastName, lawyer.firstName)}>
                                     <div className="d-flex align-center">
                                        {lawyer.user == undefined || lawyer.user.profilePictureUrl == undefined ? <img src="icon-defaultprofilepicture.png" /> : <img src={lawyer.user.profilePictureUrl} />}
                                        <span className="d-flex dir-column">
@@ -138,7 +157,6 @@ class SearchLawyers extends React.Component {
                                        </span>
                                     </div>
                                  </a>
-
                               </li>)
                            }
                         </ul>
@@ -146,31 +164,21 @@ class SearchLawyers extends React.Component {
                      </div>
                      : ""
                   }
-
-
-
                   {/* <div className="form-field">
                      <button type="submit" className="btn shadow-1 rounded-1 outline txt-blue" >
                         <span className="outline-text">Rechercher</span>
                      </button>
                   </div> */}
                </form>
-
-
-
             </div>
          </div>
-
       );
    }
 
 
-
-
    /**********************************
-    PARTIE ACCES AUX DATA : API CALLS
+   3- PARTIE ACCES AUX DATA : API CALLS
    **********************************/
-
    /*
     getSpecialities()
     Role : récuperer la liste des specialités
@@ -206,21 +214,14 @@ class SearchLawyers extends React.Component {
     @param : userSearchTerm:string
    */
    async onSearchGetLawyers(userSearchStr) {
-
+      // Configurer le headers de la requête à envoyer
       let myHeaders = new Headers({
          'Authorization': 'Bearer ' + ENV_TOKENJESS,
          'Content-Type': 'application/json'
       });
-      console.log('Recherche user: ', userSearchStr);
-      /*
-      si la recherche est un spécialité alors call aPI .....speciality[]=12
-      si la recherche est un nom alors le call api .... '&pattern='+userSearchTerm
-      */
       // make api call to get lawyers array
       let response = await fetch(
          'https://staging.app.feedbacklawyers.com/api/companies/search?pattern=' + userSearchStr,
-         //+
-         //'&pattern='+userSearchTerm,
          {
             headers: myHeaders,
             method: 'GET'
@@ -229,9 +230,10 @@ class SearchLawyers extends React.Component {
       return res.companies;
    }
 
-
 } // FIN DE LA CLASS
 
+
+// AJOUTER LE COMPONENT
 const domContainer = document.querySelector('#search-lawyers-container'); //  <div id="search-lawyers-container"></div>
 // ReactDOM.render(e(SearchLawyers), domContainer);
 ReactDOM.render(< SearchLawyers />, domContainer)
