@@ -30,7 +30,7 @@ class SearchLawyers extends React.Component {
             quand l'utilisateur saisi dans input recherche
       @param : event
    */
-   async handleKeyupOnUserSearch(ev) {
+   async handleChangeOnUserSearch(ev) {
       // e.persist(); https://fr.reactjs.org/docs/events.html
       this.setState({ userSearchString: ev.target.value });
       let userSearch = this.state.userSearchString;
@@ -137,13 +137,11 @@ class SearchLawyers extends React.Component {
                   {/* <span className="searchIcon" dangerouslySetInnerHTML={{ __html: searchIcon }}></span> */}
                   <span className="searchIcon"><i className="fas fa-search"></i></span>
                   <div className="d-flex align-center">
-                     <input value={this.state.userSearchString}
-
+                     <input value={this.state.userSearchString} className="form-control rounded-1" placeholder='avocat, cabinet, domaine juridique...'
                         onFocus={() => this.handleFocusOpenResultsBox()}
-                        onChange={e => this.handleKeyupOnUserSearch(e)}
-                        className="form-control rounded-1" placeholder='avocat, cabinet, domaine juridique...' />
+                        onChange={e => this.handleChangeOnUserSearch(e)} />
                   </div>
-                  {/* SI L'UTILISATEUR EST DANS LE input de recherche  */}
+                  {/* SI L'UTILISATEUR EST focus dans l'input de recherche on affiche la div.results */}
                   {this.state.isResultsBoxOpened == true ?
                      <div className="results">
 
