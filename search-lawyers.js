@@ -16,25 +16,33 @@ class SearchLawyers extends React.Component {
       this.getSpecialities().then((spe) => this.setState({ specialties: spe }))
    }
 
+   /****  EVENEMENT UTILISATEURS *****/
 
+   /*
+      handleKeyupOnUserSearch(e)
+      Role: afficher la liste des specialités et la liste des avocats, 
+            lorsque l'utilisateur saisi dans input recherche
+      @param : event
+   */
    async handleKeyupOnUserSearch(e) {
-      let userSearch = e.target.value;
-      console.log(userSearch);
+      // e.persist(); https://fr.reactjs.org/docs/events.html
+      this.setState({ userSearchString: e.target.value });
+      let userSearch = this.state.userSearchString;
       // si la recherche utilisateur est un domaine de compétences connu ou un avocat connu 
       if (userSearch.length < 2) {
          this.setState({ suggestedSpecialties: [], lawyers: [] });
       }
       else {
+         console.log("ok")
          let suggestedSpe = this.state.specialties.filter(s =>
             s.displayFrFr.toLowerCase().includes(userSearch.toLowerCase())
          );
-         this.setState({ userSearchString: userSearch, suggestedSpecialties: suggestedSpe });
+         this.setState({ suggestedSpecialties: suggestedSpe });
          this.setState({ isLoading: true });
          let suggestedLawyers = await this.onSearchGetLawyers(userSearch);
          this.setState({ isLoading: false });
-
          this.setState({ lawyers: suggestedLawyers });
-         console.log(this.state);
+         // console.log(this.state);
       }
    }
 
@@ -66,6 +74,19 @@ class SearchLawyers extends React.Component {
       this.setState({ isResultsBoxOpened: true })
    }
 
+   setInputValue(str) {
+      // setter le champ input avec la valeur str
+      this.setState({ userSearchString: str });
+      this.setState({ isResultsBoxOpened: false })
+   }
+
+   printFullName(nom, prenom) {
+      let lastname = nom.trim().length > 0 ? nom.toLowerCase() : '';
+      let firstname = prenom.trim().length > 0 ? prenom.toLowerCase() : ''
+      return lastname.length > 0 ? lastname + '-' + firstname.replace(' ', '-') : firstname.replace(' ', '-');
+   }
+
+   // PARTIE VUE 
    render() {
       console.log('law : ', this.state.lawyers)
       return (
@@ -73,7 +94,7 @@ class SearchLawyers extends React.Component {
          <div className="grix xs1 sm2 container d-block">
             <h1 className="font-w600">Recherchez un avocat</h1>
             <div className="form-field">
-               <form onSubmit={(e) => this.searchLawyers(e)}>
+               <form>
 
                   {(this.state.isLoading && this.state.userSearchString.trim().length > 0) ?
                      <div className="spinner small txt-blue w50">
@@ -84,20 +105,22 @@ class SearchLawyers extends React.Component {
                   <span className="searchIcon"><i className="fas fa-search"></i></span>
                   <div className="d-flex align-center">
 
-                     <input onBlur={() => this.handleBlurCloseResultsBox()} onFocus={() => this.handleFocusOpenResultsBox()}
-                        onKeyUp={e => this.handleKeyupOnUserSearch(e)}
+                     <input value={this.state.userSearchString}
+
+                        onFocus={() => this.handleFocusOpenResultsBox()}
+                        onChange={e => this.handleKeyupOnUserSearch(e)}
                         className="form-control rounded-1" placeholder='avocat, cabinet, domaine juridique...' />
 
                   </div>
 
-                  {/* SI IL Y A DES RESULTATS ON AFFICHE div.results  */}
+                  {/* SI L'UTILISATEUR EST DANS LE input de recherche  */}
                   {this.state.isResultsBoxOpened == true ?
                      <div className="results">
 
                         {/* LIST DES SPECIALITÉS */}
                         <ul className="spe">
                            {this.state.suggestedSpecialties.map(suggest =>
-                              <li key={suggest.id}>{suggest.displayFrFr}</li>)}
+                              <li onClick={() => this.setInputValue(suggest.displayFrFr)} key={suggest.id}>{suggest.displayFrFr}</li>)}
                         </ul>
 
                         {(this.state.suggestedSpecialties.length != 0 && this.state.lawyers.length != 0) && <hr />}
@@ -106,13 +129,15 @@ class SearchLawyers extends React.Component {
                         <ul className="lawyers">
                            {this.state.lawyers.map((lawyer) =>
                               <li data-url={'list.html/' + lawyer.workAddressCity + '/' + lawyer.lastName + '-' + lawyer.firstName} key={lawyer.id}>
-                                 <div className="d-flex align-center">
-                                    {lawyer.user == undefined || lawyer.user.profilePictureUrl == undefined ? <img src="icon-defaultprofilepicture.png" /> : <img src={lawyer.user.profilePictureUrl} />}
-                                    <span className="d-flex dir-column">
-                                       {lawyer.lastName} {lawyer.firstName}
-                                       <span className="city mr"> <strong>{lawyer.cabName}</strong>  {lawyer.workAddressCity}</span>
-                                    </span>
-                                 </div>
+                                 <a href={'/' + lawyer.workAddressCity.toLowerCase() + '/' + this.printFullName(lawyer.lastName, lawyer.firstName)}>
+                                    <div className="d-flex align-center">
+                                       {lawyer.user == undefined || lawyer.user.profilePictureUrl == undefined ? <img src="icon-defaultprofilepicture.png" /> : <img src={lawyer.user.profilePictureUrl} />}
+                                       <span className="d-flex dir-column">
+                                          {lawyer.lastName} {lawyer.firstName}
+                                          <span className="city mr"> <strong>{lawyer.cabName}</strong>  {lawyer.workAddressCity}</span>
+                                       </span>
+                                    </div>
+                                 </a>
 
                               </li>)
                            }
@@ -140,9 +165,11 @@ class SearchLawyers extends React.Component {
    }
 
 
-   /*********
-    API CALLS
-   **********/
+
+
+   /**********************************
+    PARTIE ACCES AUX DATA : API CALLS
+   **********************************/
 
    /*
     getSpecialities()
